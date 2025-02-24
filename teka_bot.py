@@ -73,4 +73,5 @@ def main():
     updater.idle()
 
 if __name__ == "__main__":
-    main()
+    import threading
+    threading.Thread(target=asyncio.run, args=(main(),)).start()
