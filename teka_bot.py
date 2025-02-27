@@ -4,11 +4,14 @@ import logging
 import tempfile
 import shutil
 import time
+import openai
 from collections import defaultdict
 from pydub import AudioSegment
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
 from azure.cognitiveservices.speech import SpeechConfig, SpeechRecognizer, AudioConfig, SpeechSynthesizer, ResultReason
+from azure.search.documents import SearchClient
+from azure.search.documents.models import VectorizedQuery
 
 # Variables de entorno Azure AI
 AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
@@ -16,8 +19,12 @@ AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT")
 DEPLOYMENT_NAME = "gpt-4o-mini"  # Nombre del modelo en Azure
 API_VERSION = "2024-08-01-preview" # Esto sale del URL largo en Azure AI service, no del campo versión.
 
-# Configuración de claves
+# Configuración de Azure VectorizedQuery
+#AZURE_SEARCH_ENDPOINT = "https://tu-almacen-vectorial.search.windows.net"
+#AZURE_SEARCH_KEY = os.getenv("AZURE_SEARCH_KEY")
+#AZURE_SEARCH_INDEX = "manuales-teka"
 
+# Configuración de claves
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 AZURE_SPEECH_KEY = os.getenv("AZURE_SPEECH_KEY")
 AZURE_REGION = os.getenv("AZURE_REGION")
@@ -197,17 +204,36 @@ async def handle_voice(update: Update, context: CallbackContext):
     else:
         await update.message.reply_text("No pude entender el mensaje de voz.")
 
-def main():
+#def main():
     # Crear la aplicación del bot
-    application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
+#    application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
     # Registrar los controladores de comandos y mensajes
+#    application.add_handler(CommandHandler("start", start))
+#    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
+#    application.add_handler(MessageHandler(filters.VOICE, handle_voice))
+
+#    logger.info("Bot iniciado y esperando comandos...")
+#    application.run_polling()
+
+def create_bot():
+    """Crea la aplicación del bot sin ejecutarla (para Gunicorn)."""
+    application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
     application.add_handler(CommandHandler("start", start))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
     application.add_handler(MessageHandler(filters.VOICE, handle_voice))
+    logger.info("Bot configurado y listo.")
+    return application
 
+def main():
+    """Inicia el bot en modo polling"""
+    app = create_bot()
     logger.info("Bot iniciado y esperando comandos...")
-    application.run_polling()
+    app.run_polling()
 
+# Si se ejecuta manualmente, inicia el bot
 if __name__ == "__main__":
     main()
+
+# Gunicorn usará esta variable 'app' para ejecutarlo
+app = create_bot()

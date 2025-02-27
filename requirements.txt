@@ -1,0 +1,9 @@
+python-telegram-bot
+azure-cognitiveservices-speech
+azure-search-documents
+openai
+requests
+pydub
+ffmpeg
+python-dotenv
+gunicorn
